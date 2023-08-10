@@ -1,6 +1,7 @@
 // Navigate to a specific URL
-function navigateTo(url) {
-  history.pushState(null, null, url);
+function navigateTo(url, userId) {
+  const urlWithUserId = userId ? `${url}?userId=${userId}` : url;
+  history.pushState(null, null, urlWithUserId);
   renderContent(url);
 }
 
@@ -8,7 +9,6 @@ function navigateTo(url) {
 const getHomePageTemplate = () => {
   return `
     <div>
-      <p id="choose_event_label">Choose your event</p>
       <input type="text" placeholder="Search events..." id="search_event_input" />
     </div>
     <div>
@@ -22,7 +22,7 @@ const getHomePageTemplate = () => {
 
 function getOrdersPageTemplate() {
   return `
-    <div id="content">
+    <div id="content" class="orders">
       <h1 class="text-2xl mb-4 mt-8 text-center">Purchased Tickets</h1>
     </div>
   `;
@@ -38,6 +38,7 @@ function setupNavigationEvents() {
     });
   });
 }
+
 
 function setupMobileMenuEvent() {
   const mobileMenuBtn = document.getElementById('mobileMenuBtn');
@@ -58,15 +59,24 @@ function setupPopstateEvent() {
 }
 
 function setupInitialPage() {
-  const initialUrl = window.location.pathname;
-  renderContent(initialUrl);
+  const origin = window.location.origin;
+
+  
+  if (window.location.pathname === '/') {
+    
+    window.location.href = `${origin}/login.html`;
+  } else {
+
+    const currentUrl = window.location.href;
+    renderContent(currentUrl);
+  }
 }
 
-const createEvent = (eventData) => {
+const createEvent = (eventData, userId) => {
   const contentMarkup = `
     <div class="event">
       <h4 class="event-title">${eventData.eventName}</h4>
-      <a href="main.php?eventName=${encodeURIComponent(eventData.eventId)}">
+      <a href="main.php?eventName=${encodeURIComponent(eventData.eventId)}&userId=${userId}">
         <img src="images/${eventData.eventName}.jpg" alt="Event Image" class="event-image" />
       </a>
     </div>
@@ -78,35 +88,103 @@ const createEvent = (eventData) => {
 
 
 
+
+function getEventPageTemplate(eventName) {
+  return `
+    <div>
+      <h1 class="text-2xl mb-4 mt-8 text-center">${eventName} Event Page</h1>
+      <!-- Aici puteți adăuga orice alte elemente sau informații specifice paginii de eveniment -->
+    </div>
+  `;
+}
+
+
+
+
 async function renderHomePage() {
   const mainContentDiv = document.querySelector('.main-content-component');
   mainContentDiv.innerHTML = getHomePageTemplate();
 
   const response = await fetch('http://localhost:8080/api/Event/Events');
   const data = await response.json();
-  console.log(data);
   const mainDiv = document.querySelector('.events');
   data.forEach((event) => {
-    mainDiv.appendChild(createEvent(event))
+    mainDiv.appendChild(createEvent(event, localStorage.getItem("userId")))
   });
 }
 
-function renderOrdersPage(categories) {
+function renderEventPage(userId, eventName) {
   const mainContentDiv = document.querySelector('.main-content-component');
-  mainContentDiv.innerHTML = getOrdersPageTemplate();
+  mainContentDiv.innerHTML = getEventPageTemplate(eventName);
+
 }
+
+
+async function renderOrdersPage() {
+  const mainContentDiv = document.querySelector('.main-content-component-orders');
+  mainContentDiv.innerHTML = getOrdersPageTemplate();
+
+  const response = await fetch('http://localhost:8080/api/Order/Orders');
+  const data = await response.json();
+  const table = createOrdersTable(data);
+  const mainDiv = document.querySelector('.orders');
+  mainDiv.appendChild(table);
+}
+
+function createOrdersTable(orders) {
+  const table = document.createElement('table');
+  table.classList.add('orders-table');
+
+  // Create table header row
+  const headerRow = document.createElement('tr');
+  headerRow.innerHTML = `
+      <th>Event Name</th>
+      <th>Event Type</th>
+      <th>Number of Tickets</th>
+      <th>Price per Ticket</th>
+      <th>Total Price</th>
+  `;
+  table.appendChild(headerRow);
+
+  // Create table rows for each order
+  orders.forEach((order) => {
+      const orderRow = document.createElement('tr');
+      orderRow.classList.add('order');
+
+      orderRow.innerHTML = `
+          <td>${order.ticketCategory.event.eventName}</td>
+          <td contenteditable="true">${order.ticketCategory.event.eventType.eventtypeName}</td>
+          <td contenteditable="true">${order.numberOfTickets}</td>
+          <td>$${order.ticketCategory.price}</td>
+          <td>$${order.totalPrice}</td>
+      `;
+
+      table.appendChild(orderRow);
+  });
+
+  return table;
+}
+
 
 // Render content based on URL
 function renderContent(url) {
   const mainContentDiv = document.querySelector('.main-content-component');
-  mainContentDiv.innerHTML = '';
 
-  if (url === '/') {
+  const urlParams = new URLSearchParams(window.location.search);
+  const userId = urlParams.get('userId');
+
+  var path = window.location.pathname;
+  var page = path.split("/").pop();
+
+  if (url === '/' || page === 'index.html') {
     renderHomePage();
-  } else if (url === '/Orders') {
+  } else if (page === 'orders.html') {
     renderOrdersPage();
+  } else if (url.startsWith('/main.php')) {
+    renderEventPage(userId, urlParams.get('eventName'));
   }
 }
+
 
 $(document).on("keyup", "#search_event_input", function() {
   var param = $(this).val();

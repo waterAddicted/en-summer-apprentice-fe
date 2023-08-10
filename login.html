@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Login</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #333;
+        }
+        
+        .login-container {
+            text-align: center;
+            padding: 20px;
+            border-radius: 8px;
+            background-color: rgba(255, 255, 255, 0.1);
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.3);
+        }
+        
+        .input-group {
+            margin-bottom: 15px;
+        }
+        
+        .input-group label {
+            display: block;
+            font-size: 18px;
+            color: white;
+            margin-bottom: 5px;
+        }
+        
+        .input-group input[type="text"],
+        .input-group input[type="password"] {
+            width: 100%;
+            height: 40px;
+            border: 1px solid white;
+            border-radius: 4px;
+            padding: 5px;
+            font-size: 16px;
+            color: white;
+        }
+        
+        .input-group button {
+            width: 48%;
+            height: 40px;
+            border: none;
+            border-radius: 4px;
+            font-size: 18px;
+            cursor: pointer;
+        }
+        
+        .input-group #login-button {
+            background-color: #4CAF50;
+            color: white;
+            margin-right: 4%;
+        }
+        
+        .input-group #register-button {
+            background-color: #555;
+            color: white;
+            margin-left: 4%;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="input-group">
+            <label for="email">Email:</label>
+            <input type="text" id="email" placeholder="Email">
+        </div>
+        <div class="input-group">
+            <label for="password">Password:</label>
+            <input type="password" id="password" placeholder="Password">
+        </div>
+        <div class="input-group">
+            <button id="login-button">Login</button>
+            <button id="register-button">Register</button>
+        </div>
+    </div>
+
+    <div class="register-container" style="display: none;">
+        <div class="input-group">
+            <label for="register-email">Email:</label>
+            <input type="text" id="register-email" placeholder="Email">
+        </div>
+        <div class="input-group">
+            <label for="register-name">Nume si Prenume:</label>
+            <input type="text" id="register-name" placeholder="Nume si Prenume">
+        </div>
+        <div class="input-group">
+            <label for="register-password">Password:</label>
+            <input type="password" id="register-password" placeholder="Password">
+        </div>
+        <div class="input-group">
+            <button id="validate-button">Validate</button>
+        </div>
+    </div>
+
+    <script>
+document.getElementById("login-button").addEventListener("click", async function() {
+    const email = document.getElementById("email").value;
+    const password = document.getElementById("password").value;
+
+    const response = await fetch('http://localhost:8080/api/User/Users');
+    const users = await response.json();
+
+    const foundUser = users.find(user => user.email === email && user.password === password);
+
+    if (foundUser) {
+        const userId = foundUser.userId; // Asigurați-vă că aveți numele corect al proprietății userId
+        localStorage.setItem("userId", userId);
+        window.location.href = `index.html?userId=${userId}`;
+    } else {
+        alert("Invalid email or password. Please try again.");
+    }
+});
+
+
+        document.getElementById("register-button").addEventListener("click", function() {
+            
+            document.querySelector(".login-container").style.display = "none";
+            document.querySelector(".register-container").style.display = "block";
+        });
+
+        document.getElementById("validate-button").addEventListener("click", async function() {
+            const registerEmail = document.getElementById("register-email").value;
+            const registerName = document.getElementById("register-name").value;
+            const registerPassword = document.getElementById("register-password").value;
+
+            const response = await fetch('http://localhost:8080/api/User/Users');
+            const users = await response.json();
+
+            const existingUser = users.find(user => user.email === registerEmail);
+
+            if (existingUser) {
+                alert("Email already exists. Please choose a different email.");
+            } else {
+                // Creați un obiect JSON pentru noul utilizator
+                const newUser = {
+                    email: registerEmail,
+                    userName: registerName,
+                    password: registerPassword
+                };
+
+                // Trimiteți cererea POST pentru a adăuga noul utilizator
+                const postResponse = await fetch('http://localhost:8080/api/User', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(newUser)
+                });
+
+                if (postResponse.ok) {
+                    alert("Registration successful!");
+                    // Redirecționați utilizatorul către pagina principală sau altă acțiune
+                    window.location.href = "index.html";
+                } else {
+                    alert("Registration failed. Please try again.");
+                }
+            }
+        });
+    </script>
+</body>
+</html>
