@@ -8,6 +8,16 @@ function navigateTo(url, userId) {
 // HTML templates
 const getHomePageTemplate = () => {
   return `
+  <label for="eventType">Select Event Type:</label>
+  <select id="eventType">
+  <option class = "event-type-list"></option>
+  </select>
+  <br>
+  <br>
+  <label for="eventLocation">Select Event Location:</label>
+  <select id="eventLocation">
+  <option class = "event-location-list"></option>
+  </select>
     <div>
       <input type="text" placeholder="Search events..." id="search_event_input" />
     </div>
@@ -91,6 +101,7 @@ const createEvent = (eventData, userId) => {
 
 
 
+
 function getEventPageTemplate(eventName) {
   return `
     <div>
@@ -107,13 +118,37 @@ async function renderHomePage() {
   const mainContentDiv = document.querySelector('.main-content-component');
   mainContentDiv.innerHTML = getHomePageTemplate();
 
+  const eventTypeSelect = document.getElementById('eventType');
+  const eventLocationSelect = document.getElementById('eventLocation'); // Add this line
+
   const response = await fetch('http://localhost:8080/api/Event/Events');
   const data = await response.json();
+
+  const eventTypesSet = new Set();
+  const eventLocationsSet = new Set();
+
   const mainDiv = document.querySelector('.events');
   data.forEach((event) => {
-    mainDiv.appendChild(createEvent(event, localStorage.getItem("userId")))
+    mainDiv.appendChild(createEvent(event, localStorage.getItem("userId")));
+    eventTypesSet.add(event.eventType.eventtypeName);
+    eventLocationsSet.add(event.venue.location);
+  });
+
+  eventTypesSet.forEach((eventType) => {
+    const option = document.createElement('option');
+    option.value = eventType;
+    option.text = eventType;
+    eventTypeSelect.appendChild(option);
+  });
+
+  eventLocationsSet.forEach((eventLocation) => {
+    const option = document.createElement('option');
+    option.value = eventLocation;
+    option.text = eventLocation;
+    eventLocationSelect.appendChild(option); // Add this block
   });
 }
+
 
 function renderEventPage(userId, eventName) {
   const mainContentDiv = document.querySelector('.main-content-component');
@@ -245,6 +280,10 @@ async function handleDeleteOrder(order) {
 async function handleEditOrder(order) { 
   const numberOfTickets= document.querySelector('#numberoftickets-' + order.orderId);
   const numberOfTicketsInput = parseInt(numberOfTickets.value, 10); // Parse the 
+  if (numberOfTicketsInput < 1) {
+    alert('Number of tickets must be at least 1');
+    numberOfTickets.value = 1;
+  } 
   console.log(order.user);
   console.log(order.ticketCategory);
   console.log(order.orderAt);
@@ -271,9 +310,8 @@ async function handleEditOrder(order) {
     if (editRowIndex !== -1) {
       const table = document.querySelector('.orders-table');
       table.deleteRow(editRowIndex);
-      
     }
-    alert("Order Edited.Please reload the page.")
+    alert('Order edited. Please reload the page.');
   } else {
     console.error('Failed to edit order:', order);
   }
@@ -323,6 +361,8 @@ function searchEvents(query, events) {
 
 document.addEventListener('DOMContentLoaded', () => {
   const searchInput = document.getElementById('search_event_input');
+  const slectedEventType = document.getElementById('eventType')
+  const selectedEventLocation = document.getElementById('eventLocation');
 
   searchInput.addEventListener('keyup', async () => {
     const response = await fetch("http://localhost:8080/api/Event/Events");
@@ -338,6 +378,42 @@ document.addEventListener('DOMContentLoaded', () => {
       mainDiv.appendChild(createEvent(event));
     });
   });
+
+  slectedEventType.addEventListener('change', async () => {
+    const eventTypeSelect = document.getElementById('eventType');
+
+    eventTypeSelect.addEventListener('change', async () => {
+      const response = await fetch("http://localhost:8080/api/Event/Events");
+      const data = await response.json();
+    
+      const eventTypeSelected = eventTypeSelect.value;
+      const filteredEvents = data.filter(event => event.eventType.eventtypeName === eventTypeSelected);
+    
+      const mainDiv = document.querySelector('.events');
+      mainDiv.innerHTML = '';
+    
+      filteredEvents.forEach((event) => {
+        mainDiv.appendChild(createEvent(event));
+      });
+    });
+    
+  });
+
+  selectedEventLocation.addEventListener('change', async () => {
+    const response = await fetch("http://localhost:8080/api/Event/Events");
+    const data = await response.json();
+
+    const locationEventSelected = selectedEventLocation.value;
+    const filteredEvents = data.filter(event => event.venue.location === locationEventSelected);
+
+    const mainDiv = document.querySelector('.events');
+    mainDiv.innerHTML = '';
+
+    filteredEvents.forEach((event) => {
+      mainDiv.appendChild(createEvent(event));
+    });
+  });
+  
 });
 
 

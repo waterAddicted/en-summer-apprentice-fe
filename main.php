@@ -80,9 +80,55 @@
         #eventDescription {
             font-size: 18px;
         }
+
+        .loader {
+            display: block;
+        }
+
+        .loaderOut {
+            display: none;
+        }
+
+        .loader-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
     </style>
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+        function show_loader() {
+            var loaderDiv = document.createElement("div");
+            loaderDiv.className = 'loader-container';
+            
+            var img = document.createElement("img");
+            img.src = './images/loader.gif';
+            img.className = 'loader';
+            img.id = 'image';
+            
+            loaderDiv.appendChild(img);
+            document.body.appendChild(loaderDiv);
+        }
+        
+        show_loader();
+
+        setTimeout(function() {
+            document.getElementById("image").classList.add('loaderOut');
+            setTimeout(function() {
+                document.querySelector('.loader-container').style.display = 'none';
+            }, 500); // Hide the loader container after the loader fades out
+        }, 3000);
+    });
+    </script>
 </head>
-<body>
+<body id="body">
     <a id="back_button" href="index.html">Back to Events</a>
     <div id="event_details">
         <div id="mainImageContainer" class="event-image"></div>
@@ -239,6 +285,7 @@ $(document).ready(function() {
                                     contentType: "application/json",
                                 success: function(response) {
                                     alert("Order created successfully!");
+                                    location.reload();
                                     // Redirect to orders page or your desired action
                                     // window.location.href = "orders.html";
                                 },
