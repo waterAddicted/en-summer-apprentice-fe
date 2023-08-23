@@ -11,12 +11,10 @@
         body {
             background-color: #101212;
             color: white;
-        }
-        table, th, td {
-            border: 1px solid #343941;
+            font-family: Arial, sans-serif;
         }
         #back_button {
-            position: absolute;
+            position: fixed;
             top: 15px;
             left: 15px;
             width: 200px;
@@ -27,7 +25,8 @@
             background-color: grey;
             color: white;
             font-size: 26px;
-            font-family: monospace;
+            text-align: center;
+            line-height: 65px;
             cursor: pointer;
             opacity: 0.75;
         }
@@ -41,35 +40,47 @@
         #back_button:focus {
             outline: none;
         }
-    </style>
-    <script>
-        $(document).ready(function() {
-            var url_string = window.location.href;
-            var url = new URL(url_string);
-            var param = url.searchParams.get("eventId");
+        
+        #event_details {
+            margin: 50px auto;
+            width: 80%;
+            max-width: 1200px;
+            text-align: center;
+        }
 
-            $.ajax({
-                url: "http://localhost:8080/api/Event/" + param,
-                method: "GET",
-                success: function(data) {
-                    const mainImage = `<img src="images/${data.eventName}.jpg" alt="Event Image" class="event-image"/>`;
-                    // Here you can use 'mainImage' as needed in your HTML content.
-                },
-                error: function(xhr, status, error) {
-                    console.error('Failed to fetch event data:', error);
-                }
-            });
-        });
-    </script>
+        .event-image {
+            width: 100%;
+            height: 500px;
+            background-size: cover;
+            background-position: center;
+            border: 5px solid black;
+        }
+
+        #eventDetails {
+            margin-top: 20px;
+        }
+
+        #eventName {
+            font-size: 32px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        #eventDescription {
+            font-size: 18px;
+        }
+    </style>
 </head>
 <body>
     <a id="back_button" href="index.html">Back to Events</a>
     <div id="event_details">
-        <h1>Event Details</h1>
-        <div id="mainImageContainer">
-            <!-- 'mainImage' will be inserted here -->
+        <div id="mainImageContainer" class="event-image"></div>
+        <div id="eventDetails" style="display: none;">
+            <div id="eventNameDescription">
+                <h2 id="eventName"></h2>
+                <p id="eventDescription"></p>
+            </div>
         </div>
-        <p>More event details can go here...</p>
     </div>
     <script>
         $(document).ready(function() {
@@ -81,9 +92,15 @@
                 url: "http://localhost:8080/api/Event/" + param,
                 method: "GET",
                 success: function(data) {
-                    var mainImage = '<img src="images/' + data.eventName + '.jpg" alt="Event Image" class="event-image" />';
-                    // Insert 'mainImage' into the 'mainImageContainer' div
-                    $('#mainImageContainer').html(mainImage);
+                    // Set the background image of mainImageContainer
+                    $('#mainImageContainer').css('background-image', `url('images/${data.eventName}.jpg')`);
+                    
+                    // Set the event name and description
+                    $('#eventName').text(data.eventName);
+                    $('#eventDescription').text(data.eventDescription);
+                    
+                    // Display the eventDetails div
+                    $('#eventDetails').css('display', 'block');
                 },
                 error: function(xhr, status, error) {
                     console.error('Failed to fetch event data:', error);
